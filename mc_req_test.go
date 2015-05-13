@@ -32,8 +32,8 @@ func TestEncodingRequest(t *testing.T) {
 		's', 'o', 'm', 'e', 'k', 'e', 'y',
 		's', 'o', 'm', 'e', 'v', 'a', 'l', 'u', 'e'}
 
-	if len(got) != req.Size() {
-		t.Fatalf("Expected %v bytes, got %v", got,
+	if len(got) != len(expected) {
+		t.Fatalf("Expected %v bytes, got %v", len(expected),
 			len(got))
 	}
 
@@ -76,9 +76,8 @@ func TestEncodingRequestWithExtras(t *testing.T) {
 		's', 'o', 'm', 'e', 'k', 'e', 'y',
 		's', 'o', 'm', 'e', 'v', 'a', 'l', 'u', 'e'}
 
-	if len(got) != req.Size() {
-		t.Fatalf("Expected %v bytes, got %v", got,
-			len(got))
+	if len(got) != len(expected) {
+		t.Fatalf("Expected %v bytes, got %v", len(expected), len(got))
 	}
 
 	if !reflect.DeepEqual(got, expected) {
@@ -115,9 +114,8 @@ func TestEncodingRequestWithLargeBody(t *testing.T) {
 		's', 'o', 'm', 'e', 'k', 'e', 'y',
 	}, make([]byte, 256)...)
 
-	if len(got) != req.Size() {
-		t.Fatalf("Expected %v bytes, got %v", got,
-			len(got))
+	if len(got) != len(expected) {
+		t.Fatalf("Expected %v bytes, got %v", len(expected), len(got))
 	}
 
 	if !reflect.DeepEqual(got, expected) {
