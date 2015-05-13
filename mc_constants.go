@@ -3,6 +3,7 @@ package gomemcached
 
 import (
 	"fmt"
+	"unsafe"
 )
 
 const (
@@ -94,7 +95,7 @@ type MCItem struct {
 }
 
 // Number of bytes in a binary protocol header.
-const HDR_LEN = 24
+const HDR_LEN = unsafe.Sizeof(MCRequest{})
 
 // Mapping of CommandCode -> name of command (not exhaustive)
 var CommandNames map[CommandCode]string
