@@ -129,16 +129,17 @@ type TapConnect struct {
 func (req *MCRequest) ParseTapCommands() (TapConnect, error) {
 	rv := TapConnect{
 		Flags: map[TapConnectFlag]interface{}{},
-		Name:  string(req.Key),
+		Name:  string(req.Key()),
 	}
 
-	if len(req.Extras) < 4 {
-		return rv, fmt.Errorf("not enough extra bytes: %x", req.Extras)
+	ex := req.Extras()
+	if len(ex) < 4 {
+		return rv, fmt.Errorf("not enough extra bytes: %x", ex)
 	}
 
-	flags := TapConnectFlag(binary.BigEndian.Uint32(req.Extras))
+	flags := TapConnectFlag(binary.BigEndian.Uint32(ex))
 
-	r := bytes.NewReader(req.Body)
+	r := bytes.NewReader(req.Body())
 
 	for _, f := range flags.SplitFlags() {
 		fun := TapFlagParsers[f]
