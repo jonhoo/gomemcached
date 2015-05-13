@@ -98,21 +98,28 @@ func (req *MCRequest) fixByteOrder() {
 	binary.BigEndian.PutUint64((*(*[8]byte)(unsafe.Pointer(&req.Cas)))[:], req.Cas)
 }
 
-// The wire representation of the header (with the extras and key)
+// HeaderBytes returns the wire representation of the header (with the extras
+// and key).
+// Note that this function modifies the request object, and any subsequent
+// method calls on req may return garbled results!
 func (req *MCRequest) HeaderBytes() []byte {
 	l := int(HDR_LEN) + int(req.real_elen()) + int(req.klen)
 	req.fixByteOrder()
 	return ((*[1 << 30]byte)(unsafe.Pointer(req)))[0:l]
 }
 
-// The wire representation of this request.
+// Bytes returns the wire representation of this request.
+// Note that this function modifies the request object, and any subsequent
+// method calls on req may return garbled results!
 func (req *MCRequest) Bytes() []byte {
 	l := int(HDR_LEN) + int(req.blen)
 	req.fixByteOrder()
 	return ((*[1 << 30]byte)(unsafe.Pointer(req)))[0:l]
 }
 
-// Send this request message across a writer.
+// Transmit sends this request message across a writer.
+// Note that this function modifies the request object, and any subsequent
+// method calls on req may return garbled results!
 func (req *MCRequest) Transmit(w io.Writer) (n int, err error) {
 	if req.blen < 128 {
 		n, err = w.Write(req.Bytes())

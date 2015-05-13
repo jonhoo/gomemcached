@@ -16,6 +16,7 @@ func TestEncodingRequest(t *testing.T) {
 		VBucket: 824,
 	}.SetData(nil, []byte("somekey"), []byte("somevalue"))
 
+	str := req.String()
 	got := req.Bytes()
 
 	expected := []byte{
@@ -41,8 +42,8 @@ func TestEncodingRequest(t *testing.T) {
 	}
 
 	exp := `{MCRequest opcode=SET, bodylen=9, key='somekey'}`
-	if req.String() != exp {
-		t.Errorf("Expected string=%q, got %q", exp, req.String())
+	if str != exp {
+		t.Errorf("Expected string=%q, got %q", exp, str)
 	}
 }
 
@@ -186,6 +187,14 @@ func TestReceiveRequest(t *testing.T) {
 
 	data := req.Bytes()
 
+	// .Bytes() modifies req!
+	req = MCRequest{
+		Opcode:  SET,
+		Cas:     0,
+		Opaque:  7242,
+		VBucket: 824,
+	}.SetData([]byte{1}, []byte("somekey"), []byte("somevalue"))
+
 	req2, n, err := ReceiveRequest(bytes.NewReader(data), nil)
 	if err != nil {
 		t.Fatalf("Error receiving: %v", err)
@@ -208,6 +217,13 @@ func TestReceiveRequestNoContent(t *testing.T) {
 	}.SetData(nil, nil, nil)
 
 	data := req.Bytes()
+
+	req = MCRequest{
+		Opcode:  SET,
+		Cas:     0,
+		Opaque:  7242,
+		VBucket: 824,
+	}.SetData(nil, nil, nil)
 
 	req2, n, err := ReceiveRequest(bytes.NewReader(data), nil)
 	if err != nil {

@@ -111,21 +111,27 @@ func (res *MCResponse) fixByteOrder() {
 	binary.BigEndian.PutUint64((*(*[8]byte)(unsafe.Pointer(&res.Cas)))[:], res.Cas)
 }
 
-// Get just the header bytes for this response.
+// HeaderBytes returns just the header bytes for this response.
+// Note that this function modifies the response object, and any subsequent
+// method calls on res may return garbled results!
 func (res *MCResponse) HeaderBytes() []byte {
 	l := int(HDR_LEN) + int(res.elen) + int(res.klen)
 	res.fixByteOrder()
 	return ((*[1 << 30]byte)(unsafe.Pointer(res)))[0:l]
 }
 
-// The actual bytes transmitted for this response.
+// Bytes returns the actual bytes transmitted for this response.
+// Note that this function modifies the response object, and any subsequent
+// method calls on res may return garbled results!
 func (res *MCResponse) Bytes() []byte {
 	l := int(HDR_LEN) + int(res.blen)
 	res.fixByteOrder()
 	return ((*[1 << 30]byte)(unsafe.Pointer(res)))[0:l]
 }
 
-// Send this response message across a writer.
+// Transmit sends this response message across a writer.
+// Note that this function modifies the response object, and any subsequent
+// method calls on res may return garbled results!
 func (res *MCResponse) Transmit(w io.Writer) (n int, err error) {
 	if res.blen < 128 {
 		n, err = w.Write(res.Bytes())

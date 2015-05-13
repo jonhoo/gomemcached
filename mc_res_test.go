@@ -17,6 +17,8 @@ func TestEncodingResponse(t *testing.T) {
 		Cas:    938424885,
 	}.SetData(nil, []byte("somekey"), []byte("somevalue"))
 
+	str := req.String()
+	err := req.Error()
 	got := req.Bytes()
 
 	expected := []byte{
@@ -42,12 +44,12 @@ func TestEncodingResponse(t *testing.T) {
 	}
 
 	exp := `{MCResponse status=0x62e keylen=7, extralen=0, bodylen=9}`
-	if req.String() != exp {
+	if str != exp {
 		t.Errorf("Expected string=%q, got %q", exp, req.String())
 	}
 
 	exp = `MCResponse status=0x62e, opcode=SET, opaque=7242, msg: somevalue`
-	if req.Error() != exp {
+	if err != exp {
 		t.Errorf("Expected string=%q, got %q", exp, req.Error())
 	}
 }
@@ -216,6 +218,13 @@ func TestReceiveResponse(t *testing.T) {
 
 	data := res.Bytes()
 
+	// .Bytes() modifies res!
+	res = MCResponse{
+		Opcode: SET,
+		Status: 74,
+		Opaque: 7242,
+	}.SetData([]byte{1}, []byte("somekey"), []byte("somevalue"))
+
 	res2, _, err := ReceiveResponse(bytes.NewReader(data), nil)
 	if err != nil {
 		t.Fatalf("Error receiving: %v", err)
@@ -283,6 +292,12 @@ func TestReceiveResponseWithBuffer(t *testing.T) {
 
 	data := res.Bytes()
 
+	res = MCResponse{
+		Opcode: SET,
+		Status: 74,
+		Opaque: 7242,
+	}.SetData([]byte{1}, []byte("somekey"), []byte("somevalue"))
+
 	buf := make([]byte, HDR_LEN)
 	res2, _, err := ReceiveResponse(bytes.NewReader(data), buf)
 	if err != nil {
@@ -302,6 +317,12 @@ func TestReceiveResponseNoContent(t *testing.T) {
 	}.SetData(nil, nil, nil)
 
 	data := res.Bytes()
+
+	res = MCResponse{
+		Opcode: SET,
+		Status: 74,
+		Opaque: 7242,
+	}.SetData(nil, nil, nil)
 
 	res2, _, err := ReceiveResponse(bytes.NewReader(data), nil)
 	if err != nil {
