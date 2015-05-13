@@ -103,7 +103,7 @@ func TestParseTapCommandsMalformed(t *testing.T) {
 	body = append(body, 0, 1)
 	body = append(body, 0, 2)
 
-	req := MCRequest{Key: []byte("hello"), Extras: extras, Body: body}
+	req := MCRequest{}.SetData(extras, []byte("hello"), body)
 	c, err := req.ParseTapCommands()
 
 	if err == nil {
@@ -127,7 +127,7 @@ func TestParseTapCommands(t *testing.T) {
 	// And an extra byte because
 	body = append(body, 13)
 
-	req := MCRequest{Key: []byte("hello"), Extras: extras, Body: body}
+	req := MCRequest{}.SetData(extras, []byte("hello"), body)
 	c, err := req.ParseTapCommands()
 
 	if err != nil {

@@ -15,9 +15,7 @@ func TestEncodingResponse(t *testing.T) {
 		Status: 1582,
 		Opaque: 7242,
 		Cas:    938424885,
-		Key:    []byte("somekey"),
-		Body:   []byte("somevalue"),
-	}
+	}.SetData(nil, []byte("somekey"), []byte("somevalue"))
 
 	got := req.Bytes()
 
@@ -60,10 +58,7 @@ func TestEncodingResponseWithExtras(t *testing.T) {
 		Status: 1582,
 		Opaque: 7242,
 		Cas:    938424885,
-		Extras: []byte{1, 2, 3, 4},
-		Key:    []byte("somekey"),
-		Body:   []byte("somevalue"),
-	}
+	}.SetData([]byte{1, 2, 3, 4}, []byte("somekey"), []byte("somevalue"))
 
 	buf := &bytes.Buffer{}
 	res.Transmit(buf)
@@ -99,10 +94,7 @@ func TestEncodingResponseWithLargeBody(t *testing.T) {
 		Status: 1582,
 		Opaque: 7242,
 		Cas:    938424885,
-		Extras: []byte{1, 2, 3, 4},
-		Key:    []byte("somekey"),
-		Body:   make([]byte, 256),
-	}
+	}.SetData([]byte{1, 2, 3, 4}, []byte("somekey"), make([]byte, 256))
 
 	buf := &bytes.Buffer{}
 	res.Transmit(buf)
@@ -138,10 +130,7 @@ func BenchmarkEncodingResponse(b *testing.B) {
 		Status: 1582,
 		Opaque: 7242,
 		Cas:    938424885,
-		Extras: []byte{},
-		Key:    []byte("somekey"),
-		Body:   []byte("somevalue"),
-	}
+	}.SetData(nil, []byte("somekey"), []byte("somevalue"))
 
 	b.SetBytes(int64(req.Size()))
 
@@ -156,10 +145,7 @@ func BenchmarkEncodingResponseLarge(b *testing.B) {
 		Status: 1582,
 		Opaque: 7242,
 		Cas:    938424885,
-		Extras: []byte{},
-		Key:    []byte("somekey"),
-		Body:   make([]byte, 24*1024),
-	}
+	}.SetData(nil, []byte("somekey"), make([]byte, 24*1024))
 
 	b.SetBytes(int64(req.Size()))
 
@@ -207,13 +193,13 @@ func TestIsFatal(t *testing.T) {
 }
 
 func TestResponseTransmit(t *testing.T) {
-	res := MCResponse{Key: []byte("thekey")}
+	res := MCResponse{}.SetData(nil, []byte("thekey"), nil)
 	_, err := res.Transmit(ioutil.Discard)
 	if err != nil {
 		t.Errorf("Error sending small response: %v", err)
 	}
 
-	res.Body = make([]byte, 256)
+	res = res.SetData(nil, []byte("thekey"), make([]byte, 256))
 	_, err = res.Transmit(ioutil.Discard)
 	if err != nil {
 		t.Errorf("Error sending large response thing: %v", err)
@@ -226,15 +212,11 @@ func TestReceiveResponse(t *testing.T) {
 		Opcode: SET,
 		Status: 74,
 		Opaque: 7242,
-		Extras: []byte{1},
-		Key:    []byte("somekey"),
-		Body:   []byte("somevalue"),
-	}
+	}.SetData([]byte{1}, []byte("somekey"), []byte("somevalue"))
 
 	data := res.Bytes()
 
-	res2 := MCResponse{}
-	_, err := res2.Receive(bytes.NewReader(data), nil)
+	res2, _, err := ReceiveResponse(bytes.NewReader(data), nil)
 	if err != nil {
 		t.Fatalf("Error receiving: %v", err)
 	}
@@ -249,16 +231,12 @@ func TestReceiveResponseBadMagic(t *testing.T) {
 		Opcode: SET,
 		Status: 74,
 		Opaque: 7242,
-		Extras: []byte{1},
-		Key:    []byte("somekey"),
-		Body:   []byte("somevalue"),
-	}
+	}.SetData([]byte{1}, []byte("somekey"), []byte("somevalue"))
 
 	data := res.Bytes()
 	data[0] = 0x13
 
-	res2 := MCResponse{}
-	_, err := res2.Receive(bytes.NewReader(data), nil)
+	res2, _, err := ReceiveResponse(bytes.NewReader(data), nil)
 	if err == nil {
 		t.Fatalf("Expected error, got: %#v", res2)
 	}
@@ -269,16 +247,12 @@ func TestReceiveResponseShortHeader(t *testing.T) {
 		Opcode: SET,
 		Status: 74,
 		Opaque: 7242,
-		Extras: []byte{1},
-		Key:    []byte("somekey"),
-		Body:   []byte("somevalue"),
-	}
+	}.SetData([]byte{1}, []byte("somekey"), []byte("somevalue"))
 
 	data := res.Bytes()
 	data[0] = 0x13
 
-	res2 := MCResponse{}
-	_, err := res2.Receive(bytes.NewReader(data[:13]), nil)
+	res2, _, err := ReceiveResponse(bytes.NewReader(data[:13]), nil)
 	if err == nil {
 		t.Fatalf("Expected error, got: %#v", res2)
 	}
@@ -289,16 +263,12 @@ func TestReceiveResponseShortBody(t *testing.T) {
 		Opcode: SET,
 		Status: 74,
 		Opaque: 7242,
-		Extras: []byte{1},
-		Key:    []byte("somekey"),
-		Body:   []byte("somevalue"),
-	}
+	}.SetData([]byte{1}, []byte("somekey"), []byte("somevalue"))
 
 	data := res.Bytes()
 	data[0] = 0x13
 
-	res2 := MCResponse{}
-	_, err := res2.Receive(bytes.NewReader(data[:len(data)-3]), nil)
+	res2, _, err := ReceiveResponse(bytes.NewReader(data[:len(data)-3]), nil)
 	if err == nil {
 		t.Fatalf("Expected error, got: %#v", res2)
 	}
@@ -309,16 +279,12 @@ func TestReceiveResponseWithBuffer(t *testing.T) {
 		Opcode: SET,
 		Status: 74,
 		Opaque: 7242,
-		Extras: []byte{1},
-		Key:    []byte("somekey"),
-		Body:   []byte("somevalue"),
-	}
+	}.SetData([]byte{1}, []byte("somekey"), []byte("somevalue"))
 
 	data := res.Bytes()
 
-	res2 := MCResponse{}
 	buf := make([]byte, HDR_LEN)
-	_, err := res2.Receive(bytes.NewReader(data), buf)
+	res2, _, err := ReceiveResponse(bytes.NewReader(data), buf)
 	if err != nil {
 		t.Fatalf("Error receiving: %v", err)
 	}
@@ -333,12 +299,11 @@ func TestReceiveResponseNoContent(t *testing.T) {
 		Opcode: SET,
 		Status: 74,
 		Opaque: 7242,
-	}
+	}.SetData(nil, nil, nil)
 
 	data := res.Bytes()
 
-	res2 := MCResponse{}
-	_, err := res2.Receive(bytes.NewReader(data), nil)
+	res2, _, err := ReceiveResponse(bytes.NewReader(data), nil)
 	if err != nil {
 		t.Fatalf("Error receiving: %v", err)
 	}
@@ -356,10 +321,7 @@ func BenchmarkReceiveResponse(b *testing.B) {
 		Status: 183,
 		Cas:    0,
 		Opaque: 7242,
-		Extras: []byte{1},
-		Key:    []byte("somekey"),
-		Body:   []byte("somevalue"),
-	}
+	}.SetData([]byte{1}, []byte("somekey"), []byte("somevalue"))
 
 	data := req.Bytes()
 	rdr := bytes.NewReader(data)
@@ -369,9 +331,8 @@ func BenchmarkReceiveResponse(b *testing.B) {
 	b.ResetTimer()
 	buf := make([]byte, HDR_LEN)
 	for i := 0; i < b.N; i++ {
-		res2 := MCResponse{}
 		rdr.Seek(0, 0)
-		res2.Receive(rdr, buf)
+		ReceiveResponse(rdr, buf)
 	}
 }
 
@@ -381,10 +342,7 @@ func BenchmarkReceiveResponseNoBuf(b *testing.B) {
 		Status: 183,
 		Cas:    0,
 		Opaque: 7242,
-		Extras: []byte{1},
-		Key:    []byte("somekey"),
-		Body:   []byte("somevalue"),
-	}
+	}.SetData([]byte{1}, []byte("somekey"), []byte("somevalue"))
 
 	data := req.Bytes()
 	rdr := bytes.NewReader(data)
@@ -393,8 +351,7 @@ func BenchmarkReceiveResponseNoBuf(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		res2 := MCResponse{}
 		rdr.Seek(0, 0)
-		res2.Receive(rdr, nil)
+		ReceiveResponse(rdr, nil)
 	}
 }
